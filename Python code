@@ -1,13 +1,13 @@
-import os
-import numpy as np
-import matplotlib.pyplot as plt
 import cv2 as cv
 import mediapipe as mp
 import serial
 import time
 import math
 
-arduino = serial.Serial(port='COM3', baudrate=9600, timeout=0.1)
+last_x = 0
+
+
+arduino = serial.Serial(port='COM4', baudrate=9600, timeout=0.1)
 time.sleep(2)
 
 
@@ -34,14 +34,15 @@ while True:
                 distance_servo = math.sqrt((thumbTip.x - indexTip.x)**2 + (thumbTip.y - indexTip.y)**2)
 
                 x = (0.3724375168 - distance_servo) / 0.0021135914
-                #print(f"{x}°")
+
                 if x < 0:
                     x = 0
                 elif x > 180:
                     x = 180
 
-                arduino.write(f"{int(x)}\n".encode())
-
+                if abs(x - last_x) > 2:
+                    arduino.write(f"{int(x)}\n".encode())
+                    last_x = x
 
                 thumbbottom = handLandmarks.landmark[1]
                 pinkyTip = handLandmarks.landmark[20]
@@ -58,7 +59,7 @@ while True:
                 elif distance_index > 0.32 or distance_pinky > 0.33:
                     arduino.write("HIGH\n".encode())
 
-                #print(f"Servo: {int(x)}, LED: {'HIGH' if distance_index < 0.02 else 'LOW'}")
+
 
                 print(f"distance_index:{distance_index}")
                 print(f"distance_pinky:{distance_pinky}")
